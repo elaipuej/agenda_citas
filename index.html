@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,9 +9,12 @@
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <h1>Agenda de contactos</h1>
-      <p>Gestiona tus contactos, expedientes y tareas.</p>
+    <div class="brand">
+      <div class="brand-mark">▦</div>
+      <div>
+        <h1>Agenda de contactos</h1>
+        <p>Gestiona contactos, expedientes y tareas</p>
+      </div>
     </div>
     <div class="header-actions">
       <button id="exportBtn" class="btn btn-secondary" type="button">Exportar</button>
@@ -24,16 +26,16 @@
   <main class="container">
     <section class="stats" aria-label="Resumen">
       <div class="stat-card">
-        <span>Total</span>
-        <strong id="totalCount">0</strong>
+        <div class="stat-icon">☷</div>
+        <div><span>Total</span><strong id="totalCount">0</strong></div>
       </div>
       <div class="stat-card">
-        <span>Pendientes</span>
-        <strong id="pendingCount">0</strong>
+        <div class="stat-icon">◷</div>
+        <div><span>Pendientes</span><strong id="pendingCount">0</strong></div>
       </div>
       <div class="stat-card">
-        <span>Realizadas</span>
-        <strong id="doneCount">0</strong>
+        <div class="stat-icon">✓</div>
+        <div><span>Realizadas</span><strong id="doneCount">0</strong></div>
       </div>
     </section>
 

@@ -206,20 +206,24 @@
 
   function contactCardHTML(contact) {
     const fullName = `${contact.nombre || ""} ${contact.apellido || ""}`.trim() || "Sin nombre";
+    const initials = `${(contact.nombre || "?")[0]}${(contact.apellido || "?")[0]}`.toUpperCase();
     const statusClass = contact.done ? "done" : "pending";
     const statusText = contact.done ? "Realizada" : "Pendiente";
 
     const details = [
-      ["NIE/DNI/Pasaporte", contact.documento],
-      ["Correo", contact.email],
-      ["Teléfono", contact.telefono],
-      ["Expediente", contact.expediente]
+      ["▣", "Documento", contact.documento],
+      ["@", "Correo electrónico", contact.email],
+      ["☎", "Teléfono", contact.telefono],
+      ["#", "Expediente", contact.expediente]
     ]
-      .filter(([, value]) => value)
-      .map(([label, value]) => `
+      .filter(([, , value]) => value)
+      .map(([icon, label, value]) => `
         <div class="detail">
-          <strong>${escapeHTML(label)}:</strong>
-          ${escapeHTML(value)}
+          <span class="detail-icon">${icon}</span>
+          <span class="detail-content">
+            <span class="detail-label">${escapeHTML(label)}</span>
+            <span class="detail-value">${escapeHTML(value)}</span>
+          </span>
         </div>
       `)
       .join("");
@@ -228,42 +232,37 @@
       <article class="contact-card ${statusClass}">
         <div class="contact-main">
           <div class="contact-title-row">
-            <h3 class="contact-title">${escapeHTML(fullName)}</h3>
-            <span class="status-badge ${statusClass}">${statusText}</span>
+            <div class="contact-heading">
+              <div class="avatar">${escapeHTML(initials)}</div>
+              <div>
+                <h3 class="contact-title">${escapeHTML(fullName)}</h3>
+                <div class="contact-subtitle">Contacto</div>
+              </div>
+            </div>
+            <span class="status-badge ${statusClass}">
+              ${contact.done ? "✓" : "◷"} ${statusText}
+            </span>
           </div>
 
           <div class="contact-details">
-            ${details || '<div class="detail">Sin información adicional.</div>'}
+            ${details || '<div class="detail"><span class="detail-icon">—</span><span class="detail-value">Sin información adicional</span></div>'}
           </div>
         </div>
 
-        <div class="card-actions">
-          <button
-            class="btn ${contact.done ? "btn-secondary" : "btn-success"}"
-            type="button"
-            data-action="toggle"
-            data-id="${escapeHTML(contact.id)}"
-          >
-            ${contact.done ? "↩ Pendiente" : "✓ Realizada"}
-          </button>
-
-          <button
-            class="btn btn-secondary"
-            type="button"
-            data-action="edit"
-            data-id="${escapeHTML(contact.id)}"
-          >
-            Editar
-          </button>
-
-          <button
-            class="btn btn-danger"
-            type="button"
-            data-action="delete"
-            data-id="${escapeHTML(contact.id)}"
-          >
-            Eliminar
-          </button>
+        <div class="card-footer">
+          <span class="contact-subtitle">${contact.expediente ? "Expediente " + escapeHTML(contact.expediente) : "Sin expediente"}</span>
+          <div class="card-actions">
+            <button
+              class="btn ${contact.done ? "btn-secondary" : "btn-success"}"
+              type="button"
+              data-action="toggle"
+              data-id="${escapeHTML(contact.id)}"
+            >
+              ${contact.done ? "↩ Pendiente" : "✓ Realizada"}
+            </button>
+            <button class="btn btn-secondary" type="button" data-action="edit" data-id="${escapeHTML(contact.id)}">Editar</button>
+            <button class="btn btn-danger" type="button" data-action="delete" data-id="${escapeHTML(contact.id)}">Eliminar</button>
+          </div>
         </div>
       </article>
     `;
