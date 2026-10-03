@@ -236,7 +236,6 @@
               <div class="avatar">${escapeHTML(initials)}</div>
               <div>
                 <h3 class="contact-title">${escapeHTML(fullName)}</h3>
-                <div class="contact-subtitle">Contacto</div>
               </div>
             </div>
             <span class="status-badge ${statusClass}">
@@ -250,7 +249,6 @@
         </div>
 
         <div class="card-footer">
-          <span class="contact-subtitle">${contact.expediente ? "Expediente " + escapeHTML(contact.expediente) : "Sin expediente"}</span>
           <div class="card-actions">
             <button
               class="btn ${contact.done ? "btn-secondary" : "btn-success"}"
