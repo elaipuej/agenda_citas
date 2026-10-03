@@ -1,1 +1,125 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Agenda de contactos">
+  <title>Agenda de contactos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Agenda de contactos</h1>
+      <p>Gestiona tus contactos, expedientes y tareas.</p>
+    </div>
+    <div class="header-actions">
+      <button id="exportBtn" class="btn btn-secondary" type="button">Exportar</button>
+      <label class="btn btn-secondary file-label" for="importFile">Importar</label>
+      <input id="importFile" type="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="stats" aria-label="Resumen">
+      <div class="stat-card">
+        <span>Total</span>
+        <strong id="totalCount">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Pendientes</span>
+        <strong id="pendingCount">0</strong>
+      </div>
+      <div class="stat-card">
+        <span>Realizadas</span>
+        <strong id="doneCount">0</strong>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-header">
+        <div>
+          <h2 id="formTitle">Nuevo contacto</h2>
+          <p>Los datos se guardan automáticamente en este navegador.</p>
+        </div>
+      </div>
+
+      <form id="contactForm" autocomplete="off">
+        <input type="hidden" id="contactId">
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="nombre">Nombre <span>*</span></label>
+            <input id="nombre" name="nombre" type="text" required maxlength="100" placeholder="Nombre">
+          </div>
+
+          <div class="field">
+            <label for="apellido">Apellido <span>*</span></label>
+            <input id="apellido" name="apellido" type="text" required maxlength="150" placeholder="Apellidos">
+          </div>
+
+          <div class="field">
+            <label for="documento">NIE/DNI/Pasaporte</label>
+            <input id="documento" name="documento" type="text" maxlength="50" placeholder="Ej. 12345678A">
+          </div>
+
+          <div class="field">
+            <label for="email">Correo electrónico</label>
+            <input id="email" name="email" type="email" maxlength="150" placeholder="correo@ejemplo.com">
+          </div>
+
+          <div class="field">
+            <label for="telefono">Número de teléfono</label>
+            <input id="telefono" name="telefono" type="tel" maxlength="40" placeholder="+34 600 000 000">
+          </div>
+
+          <div class="field">
+            <label for="expediente">Número de expediente</label>
+            <input id="expediente" name="expediente" type="text" maxlength="100" placeholder="N.º de expediente">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" id="saveBtn">Guardar contacto</button>
+          <button class="btn btn-secondary" type="button" id="cancelBtn" hidden>Cancelar edición</button>
+          <button class="btn btn-light" type="reset" id="clearBtn">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="section-header contacts-header">
+        <div>
+          <h2>Contactos</h2>
+          <p id="resultInfo">0 contactos</p>
+        </div>
+        <div class="filters">
+          <input id="searchInput" type="search" placeholder="Buscar contacto..." aria-label="Buscar contacto">
+          <select id="statusFilter" aria-label="Filtrar por estado">
+            <option value="all">Todos</option>
+            <option value="pending">Pendientes</option>
+            <option value="done">Realizadas</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📇</div>
+        <h3>No hay contactos</h3>
+        <p>Añade tu primer contacto usando el formulario de arriba.</p>
+      </div>
+
+      <div id="contactsList" class="contacts-list" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Agenda de contactos · Datos almacenados localmente en este navegador</span>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
