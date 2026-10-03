@@ -212,8 +212,8 @@
 
     const details = [
       ["▣", "Documento", contact.documento],
-      ["@", "Correo electrónico", contact.email],
       ["☎", "Teléfono", contact.telefono],
+      ["@", "Correo electrónico", contact.email],
       ["#", "Expediente", contact.expediente]
     ]
       .filter(([, , value]) => value)
