@@ -49,28 +49,64 @@ function showApp(user){currentUser=user;$("authPanel").classList.toggle("hidden"
 async function loadContacts(){hideNotice();const {data,error}=await db.from("contacts").select("*").order("created_at",{ascending:false});if(error){notice("No se pudieron cargar los contactos: "+friendlyError(error));return;}contacts=data||[];render();}
 function render(){const q=$("searchInput").value.trim().toLocaleLowerCase("es"),status=$("statusFilter").value;const shown=contacts.filter(c=>(status==="all"||c.status===status)&&[c.nombre,c.apellido,c.documento,c.email,c.telefono,c.expediente].some(v=>String(v||"").toLocaleLowerCase("es").includes(q)));$("totalCount").textContent=contacts.length;$("pendingCount").textContent=contacts.filter(c=>c.status==="pending").length;$("doneCount").textContent=contacts.filter(c=>c.status==="done").length;$("resultInfo").textContent=`${shown.length} de ${contacts.length} contacto(s)`;$("emptyState").classList.toggle("hidden",shown.length>0);$("contactsList").innerHTML=shown.map(c=>`<article class="contact"><div><h3>${escapeHtml(c.nombre)} ${escapeHtml(c.apellido)}</h3><div class="details">${c.documento?`Documento: ${escapeHtml(c.documento)}<br>`:""}${c.email?`Email: ${escapeHtml(c.email)}<br>`:""}${c.telefono?`Teléfono: ${escapeHtml(c.telefono)}<br>`:""}${c.expediente?`Expediente: ${escapeHtml(c.expediente)}`:""}</div><span class="pill ${c.status==="done"?"done":""}">${c.status==="done"?"Realizada":"Pendiente"}</span></div><div class="contact-actions"><button class="btn light" data-action="status" data-id="${c.id}">${c.status==="done"?"Marcar pendiente":"Marcar realizada"}</button><button class="btn secondary" data-action="edit" data-id="${c.id}">Editar</button><button class="btn danger" data-action="delete" data-id="${c.id}">Eliminar</button></div></article>`).join("");}
 function resetForm(){ $("contactForm").reset();$("contactId").value="";$("formTitle").textContent="Nuevo contacto";$("saveBtn").textContent="Guardar contacto";$("cancelBtn").classList.add("hidden");}
-$("authForm").addEventListener("submit",async e=>{e.preventDefault();if(!configReady){notice("Antes de iniciar sesión, rellena SUPABASE_URL y SUPABASE_ANON_KEY en el código HTML.","error","authNotice");return;}const email=$("authEmail").value.trim(),password=$("authPassword").value;const {data,error}=await db.auth.signInWithPassword({email,password});if(error){notice(friendlyError(error),"error","authNotice");return;}hideNotice("authNotice");showApp(data.user);});
-$("signupBtn").addEventListener("click",async()=>{if(!configReady){notice("Antes de crear la cuenta, rellena SUPABASE_URL y SUPABASE_ANON_KEY en el código HTML.","error","authNotice");return;}const email=$("authEmail").value.trim(),password=$("authPassword").value;if(!email||password.length<6){notice("Introduce un correo y una contraseña de al menos 6 caracteres.","error","authNotice");return;}const {data,error}=await db.auth.signUp({email,password});if(error){notice(friendlyError(error),"error","authNotice");return;}if(data.session){showApp(data.user);notice("Cuenta creada correctamente.","ok");}else{notice("Cuenta creada. Revisa tu correo para confirmar la dirección y después inicia sesión.","ok","authNotice");}});
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const btn=$("loginBtn");
+  try{
+    if(!configReady||!db){notice("La conexión con Supabase no está configurada o todavía no está lista. Recarga la página y comprueba la URL y la clave pública.","error","authNotice");return;}
+    const email=$("authEmail").value.trim(),password=$("authPassword").value;
+    btn.disabled=true;btn.textContent="Iniciando sesión…";
+    const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error){notice(friendlyError(error),"error","authNotice");return;}
+    hideNotice("authNotice");showApp(data.user);
+  }catch(err){notice("No se pudo conectar con Supabase: "+friendlyError(err),"error","authNotice");}
+  finally{btn.disabled=false;btn.textContent="Iniciar sesión";}
+});
+$("signupBtn").addEventListener("click",async()=>{
+  try{
+    if(!configReady||!db){notice("La conexión con Supabase no está configurada o todavía no está lista.","error","authNotice");return;}
+    const email=$("authEmail").value.trim(),password=$("authPassword").value;
+    if(!email||password.length<6){notice("Introduce un correo y una contraseña de al menos 6 caracteres.","error","authNotice");return;}
+    const {data,error}=await db.auth.signUp({email,password});
+    if(error){notice(friendlyError(error),"error","authNotice");return;}
+    if(data.session){showApp(data.user);notice("Cuenta creada correctamente.","ok");}
+    else{notice("Cuenta creada. Revisa tu correo para confirmar la dirección y después inicia sesión.","ok","authNotice");}
+  }catch(err){notice("No se pudo conectar con Supabase: "+friendlyError(err),"error","authNotice");}
+});
 $("logoutBtn").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){notice(friendlyError(error));return;}contacts=[];showApp(null);});
 $("contactForm").addEventListener("submit",async e=>{e.preventDefault();if(!currentUser)return;hideNotice();const payload={nombre:$("nombre").value.trim(),apellido:$("apellido").value.trim(),documento:$("documento").value.trim()||null,email:$("email").value.trim()||null,telefono:$("telefono").value.trim()||null,expediente:$("expediente").value.trim()||null};const id=$("contactId").value;$("saveBtn").disabled=true;let result;if(id){result=await db.from("contacts").update(payload).eq("id",id).select().single();}else{result=await db.from("contacts").insert({...payload,user_id:currentUser.id,status:"pending"}).select().single();}$("saveBtn").disabled=false;if(result.error){notice("No se pudo guardar. Comprueba que has ejecutado el SQL de configuración en Supabase. Detalle: "+friendlyError(result.error));return;}resetForm();await loadContacts();notice(id?"Contacto actualizado.":"Contacto guardado en Supabase.","ok");});
 $("cancelBtn").addEventListener("click",resetForm);$("contactForm").addEventListener("reset",()=>{setTimeout(()=>{if(!$("contactId").value)resetForm();},0);});
 $("contactsList").addEventListener("click",async e=>{const b=e.target.closest("button[data-action]");if(!b)return;const c=contacts.find(x=>String(x.id)===b.dataset.id);if(!c)return;if(b.dataset.action==="edit"){ $("contactId").value=c.id;for(const k of ["nombre","apellido","documento","email","telefono","expediente"])$(k).value=c[k]||"";$("formTitle").textContent="Editar contacto";$("saveBtn").textContent="Guardar cambios";$("cancelBtn").classList.remove("hidden");$("nombre").focus();window.scrollTo({top:0,behavior:"smooth"});return;}if(b.dataset.action==="delete"){if(!confirm(`¿Eliminar el contacto ${c.nombre} ${c.apellido}? Esta acción no se puede deshacer.`))return;const {error}=await db.from("contacts").delete().eq("id",c.id);if(error){notice("No se pudo eliminar: "+friendlyError(error));return;}await loadContacts();notice("Contacto eliminado.","ok");return;}if(b.dataset.action==="status"){const {error}=await db.from("contacts").update({status:c.status==="done"?"pending":"done"}).eq("id",c.id);if(error){notice("No se pudo cambiar el estado: "+friendlyError(error));return;}await loadContacts();}});
 $("searchInput").addEventListener("input",render);$("statusFilter").addEventListener("change",render);
 $("exportBtn").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(contacts,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="contactos-supabase.json";a.click();URL.revokeObjectURL(url);});
-$("importFile").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{const data = JSON.parse(await file.text());
-
-const imported = Array.isArray(data)
-  ? data
-  : Array.isArray(data?.contacts)
-    ? data.contacts
-    : null;
-
-if (!imported) {
-  throw new Error(
-    "Formato JSON no reconocido. Se esperaba una lista de contactos o un objeto con la propiedad contacts."
-  );const rows=data.map(c=>({user_id:currentUser.id,nombre:String(c.nombre||"").trim(),apellido:String(c.apellido||"").trim(),documento:c.documento||null,email:c.email||null,telefono:c.telefono||null,expediente:c.expediente||null,status: (
-  c.status === "done" || c.done === true
-) ? "done" : "pending"})).filter(c=>c.nombre&&c.apellido);if(!rows.length)throw new Error("No se encontraron contactos con nombre y apellido.");const {error}=await db.from("contacts").insert(rows);if(error)throw error;await loadContacts();notice(`Importados ${rows.length} contacto(s).`,"ok");}catch(err){notice("No se pudo importar el archivo: "+friendlyError(err));}finally{e.target.value="";}});
+$("importFile").addEventListener("change",async e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  try{
+    const data=JSON.parse(await file.text());
+    const imported=Array.isArray(data)?data:(Array.isArray(data?.contacts)?data.contacts:null);
+    if(!imported) throw new Error("Formato JSON no reconocido. Se esperaba una lista de contactos o un objeto con la propiedad contacts.");
+    const rows=imported.map(c=>({
+      user_id:currentUser.id,
+      nombre:String(c.nombre||"").trim(),
+      apellido:String(c.apellido||"").trim(),
+      documento:c.documento||null,
+      email:c.email||null,
+      telefono:c.telefono||null,
+      expediente:c.expediente||null,
+      status:(c.status==="done"||c.done===true)?"done":"pending"
+    })).filter(c=>c.nombre&&c.apellido);
+    if(!rows.length) throw new Error("No se encontraron contactos con nombre y apellido.");
+    const {error}=await db.from("contacts").insert(rows);
+    if(error) throw error;
+    await loadContacts();
+    notice(`Importados ${rows.length} contacto(s).`,"ok");
+  }catch(err){
+    notice("No se pudo importar el archivo: "+friendlyError(err));
+  }finally{
+    e.target.value="";
+  }
+});
 (async()=>{if(!configReady){notice("Configura primero la URL y la clave de Supabase en el bloque CONFIGURACIÓN del HTML.","error","authNotice");return;}db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);const {data:{session},error}=await db.auth.getSession();if(error){notice(friendlyError(error),"error","authNotice");return;}showApp(session?.user||null);db.auth.onAuthStateChange((_event,session)=>{showApp(session?.user||null);});})();
 </script>
 </body>
